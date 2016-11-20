@@ -1,8 +1,5 @@
-# Permalinks
-#
-# Use of `relative_permalinks` ensures post links from the index work properly.
+# /:categories/:year/:month/:day/:title/
 permalink:           pretty
-relative_permalinks: true
 
 # Setup
 title:               Ben Mann
@@ -11,7 +8,13 @@ description:         'Currently under construction'
 url:                 http://8enmann.github.io
 baseurl:             ''
 paginate:            5
+paginate_path: "page:num"
+gems: [jekyll-paginate, jekyll-gist] 
 
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  
 # About/contact
 author:
   name:              Ben Mann
