@@ -1,0 +1,22 @@
+# Permalinks
+#
+# Use of `relative_permalinks` ensures post links from the index work properly.
+permalink:           pretty
+relative_permalinks: true
+
+# Setup
+title:               Ben Mann
+tagline:             'Projects etc from an aspring digital sorcerer'
+description:         'Currently under construction'
+url:                 http://8enmann.github.io
+baseurl:             ''
+paginate:            5
+
+# About/contact
+author:
+  name:              Ben Mann
+  url:               https://twitter.com/8enmann
+  email:             8enmann+io@gmail.com
+
+# Custom vars
+version:             1.0.0
