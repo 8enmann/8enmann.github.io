@@ -4,8 +4,9 @@ title: Introducing Webtendo
 ---
 
 # Inspiration
+sdfasdfasfsss
 
-# Archicture
+# Architecture
 
 ## Learn once, write everywhere
 
