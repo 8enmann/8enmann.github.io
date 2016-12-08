@@ -11,10 +11,6 @@ paginate:            5
 paginate_path: "page:num"
 gems: [jekyll-paginate, jekyll-gist] 
 
-kramdown:
-  input: GFM
-  syntax_highlighter: rouge
-  
 # About/contact
 author:
   name:              Ben Mann
