@@ -1,5 +1,6 @@
 ---
 layout: post
+comments: true
 title: Introducing Webtendo — open source, multiplayer, in-person game platform
 ---
 
