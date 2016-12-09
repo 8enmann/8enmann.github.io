@@ -19,13 +19,14 @@ In my tests using Chrome 54 on a Mac and Chrome 54 on Android on the same wifi n
 
 We also want cross platform support, so developers can reach the largest potential audience without extra effort. 
 
-## Learn once, write everywhere
+## iOS support — learn once, write everywhere
+Check it out on [iTunes](https://itunes.apple.com/us/app/webtendo/id1180349310)! As I mentioned, iOS browswers don't support WebRTC, so I needed a native app that would 
+
 A few years ago I spent months fighting with [PhoneGap/Cordova](https://en.wikipedia.org/wiki/Apache_Cordova). I loved how fast I could iterate and test suite execution speed, but at the end of the day the platform itself was too buggy. When we launched, users complained of random network disconnects even when other apps were chugging smoothly. It was hard to follow native UI paradigms. Eventually I bit the bullet and rewrote everything natively on Android, swearing never again to put so much energy into a platform not proven to work at scale.
 
-Fast forward to spring of this year and all my dev friends are talking about  React Native, and how magical it is to be able to use all our JS tooling but still write native apps. It seemed too good to be true, but as I tried it in exploring a side project it turned out to be a wonderful development experience. It has its quirks but waiting for native compilation and deploy, rather than just hitting save and instantly seeing changes, is unforgiveable.
+Fast forward to spring of this year and all my dev friends are talking about  [React Native](https://facebook.github.io/react-native/), and how magical it is to be able to use all our JS tooling but still write native apps. It seemed too good to be true, but as I tried it in exploring a side project it turned out to be a wonderful development experience. It has its quirks but waiting for native compilation and deploy, rather than just hitting save and instantly seeing changes, is unforgiveable.
 
-That said, React native isn't really built to share code across vanilla React and React Native, and on top of that I didn't want to tie developers down to a single layout engine. Maybe someone will make a game in WebGL, another in Canvas, and another in ThreeJS. So I made an semi-awful hack where the transport layer, which doesn't work in iOS web, is in React Native, and everything else is a webview in React Native. There's some [tricksy bridge code](https://github.com/8enmann/webtendo/blob/master/public/scripts/webtendo.js#L79) that allows the webview to talk to the native environment and a small cost for serializing and deserializing the JS, but in practice performance seems unaffected!
-
+That said, React native isn't really built to share code across vanilla React and React Native (otherwise its slogan would be "learn once, write once"), and on top of that I didn't want to tie developers down to a single layout engine. Maybe someone will make a game in WebGL, another in Canvas, and another in ThreeJS. So I made an semi-awful hack where the transport layer, which doesn't work in iOS web, is in React Native, and everything else is a webview in React Native. There's some [tricksy bridge code](https://github.com/8enmann/webtendo/blob/master/public/scripts/webtendo.js#L79) that allows the webview to talk to the native environment and a small cost for serializing and deserializing the JS, but in practice performance seems unaffected!
 ```javascript
 // Connect to the signaling server if we have webrtc access.
 var socket;
@@ -50,6 +51,16 @@ The first try statement will bail out before it establishes the socket connectio
 
 Luckily I was able to copy over the transport code with just a few small tweaks, and in the future, thanks to Babel transpilation, I intend to reuse the code entirely.
 
+### dev/prod config
+
+Another wrinkle is that since React Native doesn't give the user a URL bar to edit, development builds need to know to use localhost and prod needs to know the public URL. I was surprised this isn't baked into React Native, since dev vs prod is a part of other frameworks like NPM. But using [luggit/react-native-config](https://github.com/luggit/react-native-config) I was able to easily and readably reference config. In `index.ios.js`
+```javascript
+import Config from 'react-native-config'
+var socket = io.connect(`ws://${Config.SIGNALING_SERVER_URL}`, {
+...
+```
+and then in `.env`, `SIGNALING_SERVER_URL=localhost:8080` and in `.env.prod`, `SIGNALING_SERVER_URL=webtendo.herokuapp.com`.
+
 ## Webpack and ES6
 As my friends started making games on the platoform, the vanilla HTML5 project structure started causing pain. Which JS files should be imported? What is the public interface for each? Can we have optional typing? What about classes? Etc. 
 
@@ -57,22 +68,91 @@ I started out trying to use [SystemJS](https://github.com/systemjs/systemjs) but
 
 I had heard bad things about Webpack, and nearly all the examples I could find online were too simple or too complicated. Starting simple, however, I appreciated the relative lack of magic in the explicit config and presence of a bunch of features I needed, like transpilation, source-maps, rebuild-on-save, and module loading.
 
+## Server
+I think full stack developers underestimate the cost of switching between languages for frontend/backend. I got used to this, having done Java, Python and C++ backends, and Android Java, web and Python frontends. Being able to use Javascript everywhere has been unexpectedly lovely. I can use the same editor (Emacs), the same devtools (Chrome/Electron), and the same package management (NPM). I don't mix up commands and syntax anymore. I looked into serving performance, and it's not terribly different even between C++ and JS. So, NodeJS it is.
+
+WebRTC allows client to client communication, but those clients still need a way to find each other across the vast internet. For this I made a signaling server. ExpressJS seemed too heavyweight a framework for this, so for maximum simplicity I decided to go with entirely static file serving and [Socket.IO](http://socket.io/) for high performance, cross-platform transport. Compared to my experience setting up HTTP servers in the past, this was a breeze, and far more powerful.
+
+For example, for a client to client message relay, it's just
+```javascript
+var clients = {};
+io.sockets.on('connection', function(socket) {
+  clients[clientId] = socket.id;
+  socket.on('message', message => {
+    io.to(clients[message.recipient]).emit('message', message);
+  });
+});
+```
+When one machine can't hold everyone, we can easily [plug into Redis](http://socket.io/docs/using-multiple-nodes/) and shard.
+
+### Room names
+A common annoyance with WebRTC demos I tried was entering a room name, which was typically a random string. On a laptop it's sort of reasonable to copy/paste this, but on a phone it gets annoying, especially with autocorrect. So I used [jjt/hashwords](https://github.com/jjt/hashwords) to generate a deterministic, human readable room name from the user's external IP address. 
+```javascript
+var hashwords = require('hashwords');
+const hasher = hashwords({salt: '~webtendo~'});
+function getRoomId(seed) {
+  return hasher.hashStr(seed).toLowerCase().split(' ').slice(0,2).join('-');
+}
+io.sockets.on('connection', socket => {
+  var clientIP;
+  var socketRoom;
+  if (socket.request.headers['x-forwarded-for']) {
+    clientIP = socket.request.headers['x-forwarded-for'];
+    console.log('clientIP', clientIP, 'aka', getRoomId(clientIP));
+});
+```
+For users on the same subnet, they'll magically get put in the same room on the game selection screen. For others, they'll still have to type it, but they can use swype since these are normal dictionary words.
+
 ## Hosting
+The NPM ecosystem has come a long way in the last few years. Before, devs had to learn multiple systems to do build/deploy, like bower, grunt, etc. `package.json` allows simple flexible build/deploy through `scripts`.
+```javascript
+"scripts": {
+  "start": "node server.js",
+  "webpack": "webpack --progress --colors --watch -d",
+  "postinstall": "webpack -p --progress --colors"
+},
+```
 
-
-## iOS support
-https://itunes.apple.com/us/app/webtendo/id1180349310
-
-### dev/prod config
+With just this and `"engines"`, you can hook up your Github repo to [Heroku](https://heroku.com) and with a simple push to a branch of your choosing, it will build and deploy for you! And devs don't have to remember all the options they want for webpack, they can just run `npm run webpack` and start hacking.
 
 # Games
+In the initial set of games, I wanted to showcase 
+* Performance — lots of stuff on the screen at once with no degradation; realtime
+* Secret vs public information — The controller can show you something private, while the main screen shows you what everyone knows
+* Truly multiplayer — unlike e.g., [Dominion](https://en.wikipedia.org/wiki/Dominion_(card_game)), actions of other players are very important to you
+
+On top of that, all video game consoles have a standard controller with some kind of direction input (D-pad or joystick) and some buttons. I wanted to create one for the phone that you could use without looking at, but would still be expressive enough to make many games around. My inspiration was the original NES controller.
+![Webtendo controller]({{ site.baseurl }}/assets/controller.jpeg)
 
 ## Spacewar
+![Spacewar]({{ site.baseurl }}/assets/spacewar.png)
+I actually created this by accident. I was testing the joystick and buttons and wanted a more visual way of integration testing. I looked at a few JS game frameworks, but decided to just make something from scratch to make it as simple as possible to gut and start over. By the time I had something rotating, moving around, and firing bullets, it was pretty obvious to make a space shooter. While I was at it, to load test a bit, I decided to put the stars in the background. 
 
-## Scrabble
+The only thing missing was collision detection between the bullets and the ships. Thanks to [@adamreis](https://github.com/adamreis) for implementing! With many players, doing O(N<sup>2</sup>) comparisons would quickly become prohibitive with many players. Implementing [quadtrees](https://gamedevelopment.tutsplus.com/tutorials/quick-tip-use-quadtrees-to-detect-likely-collisions-in-2d-space--gamedev-374) seemed like overkill, so he went the middle route and used a simple grid. Even with 8 players firing like crazy the browser still maintains framerate!
+
+Best of all, the first time I got a bunch of friends playing this, my desired effect was achieved: everyone was shouting at each other, cheering, moaning, and generally having a great time.
 
 ## Poker
+Poker's a great candidate for Webtendo. It can have many players, there's secret (hands) and public (flop) information, the rules and accounting are complicated (how to do side pots when someone goes all-in?), and it's annoying to set up all the chips and deal the cards.
+
+It was also a great learning experience for [@mmann](https://github.com/mmann), who before Thanksgiving had never written any Javascript. In spite of that, he pretty much wrote the whole thing over Thanksgiving week! It's still got some bugs and areas for improvement I documented in [the README](https://github.com/8enmann/webtendo/blob/master/public/poker/README.md). One of the challenges was determining the best hand. We couldn't find an open source JS hand evaluator, so Max built one. One of the tricks was coming up with a numeric representation of the hand, so that high cards would be easy to compare without breaking encapsulation of the hand evaluation rules.
+```javascript
+// Compute relative hand score.
+handValue = 0;
+for(let i = 0;i < 5;i++)
+  handValue += Math.pow(20, 5-i) * valueList[i + 1][0];
+handValue += Math.pow(20, 6) * this.handType;
+```
+where `valueList` is a list of cards sorted by frequency of occurrence, then value.
+
+When we first playtested it, we felt a little disoriented and realized it's because with everything managed for you, the game moves *fast*. The first few rounds, people bet pretty arbitrarily, or were quick to go all-in. After that they sober up and start becoming more invested. It becomes more about reading people and making careful choices on how to bet. 
+
+## Scrabble
+Still in development! Many thanks to [@hyolyeng](https://github.com/hyolyeng)! As I developed the platform on `master`, I constantly broke her `scrabble` branch. Many of the improvements, such as not checking in the generated js bundles, were her idea. And I don't have an iPhone, so I kept breaking that too, and she'd clean up after. Now that there are separate dirs for each game, it's easier to develop in parallel and not step on each others' toes.
 
 # Contribute
-https://github.com/8enmann/webtendo
+Ideally a community of producers and consumers will spring up around this! And even if not, I hope it serves as an example of project structure that's suffuciently complex to support small projects. TODOs are listed in both repos below or come up with your own and send me a pull request!
+
+**Server and web** [https://github.com/8enmann/webtendo](https://github.com/8enmann/webtendo)  
+**React Native** [https://github.com/8enmann/WebtendoClient](https://github.com/8enmann/WebtendoClient)
 
