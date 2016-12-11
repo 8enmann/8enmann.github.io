@@ -3,28 +3,10 @@ layout: page
 title: About
 ---
 
-<p class="message">
-  Hey there! This page is included as an example. Feel free to customize it for your own use upon downloading. Carry on!
-</p>
+I'm a software engineer in San Francisco. 
 
-In the novel, *The Strange Case of Dr. Jeykll and Mr. Hyde*, Mr. Poole is Dr. Jekyll's virtuous and loyal butler. Similarly, Poole is an upstanding and effective butler that helps you build Jekyll themes. It's made by [@mdo](https://twitter.com/mdo).
+Back in 2010, I read a character recognition textbook and tried to make an [offline Chinese recognition/translation app for Android](https://www.goodreads.com/user/show/51010304-ben-mann) with my brother and some classmates. Phones weren't quite powerful enough back then, though, so the project lost steam. Regardless, that project represents my general optimism that we can create amazing new experiences with technology, and that certainly panned out at Google. At Google I did full stack development, including everything from UX design to infrastructure scaling. I was also Tech Lead/Manager of a team of seven engineers. See [LinkedIn](https://www.linkedin.com/in/benjamin-mann) for more info.
 
-There are currently two themes built on Poole:
+I recently left Google to start a company. I'm currently hacking on side projects while I meet and evaluate potential cofounders.
 
-* [Hyde](http://hyde.getpoole.com)
-* [Lanyon](http://lanyon.getpoole.com)
-
-Learn more and contribute on [GitHub](https://github.com/poole).
-
-## Setup
-
-Some fun facts about the setup of this project include:
-
-* Built for [Jekyll](http://jekyllrb.com)
-* Developed on GitHub and hosted for free on [GitHub Pages](https://pages.github.com)
-* Coded with [Sublime Text 2](http://sublimetext.com), an amazing code editor
-* Designed and developed while listening to music like [Blood Bros Trilogy](https://soundcloud.com/maddecent/sets/blood-bros-series)
-
-Have questions or suggestions? Feel free to [open an issue on GitHub](https://github.com/poole/issues/new) or [ask me on Twitter](https://twitter.com/mdo).
-
-Thanks for reading!
+Outside of work you may find me at Mission Cliffs or running in Golden Gate Park. I [love to read](https://www.goodreads.com/user/show/51010304-ben-mann).
