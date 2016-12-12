@@ -4,7 +4,7 @@ permalink:           pretty
 # Setup
 title:               Ben Mann
 tagline:             'projects &c'
-description:         'Currently under construction'
+description:         'Read about my projects, maybe learn something, maybe lend a hand!'
 url:                 http://8enmann.github.io
 baseurl:             ''
 paginate:            5
