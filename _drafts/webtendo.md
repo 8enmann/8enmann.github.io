@@ -4,7 +4,9 @@ comments: true
 title: Introducing Webtendo — open source, multiplayer, in-person game platform
 ---
 
-**tl;dr** Visit [https://webtendo.herokuapp.com](https://webtendo.herokuapp.com) on your laptop and phone (ideally on the same wifi network and with friends)
+<p class="message">
+<strong>tl;dr</strong> Visit <a href="https://webtendo.herokuapp.com">https://webtendo.herokuapp.com</a> on your laptop and phone (ideally on the same wifi network and with friends)
+</p>
 
 # Inspiration
 When I was growing up, game consoles were the best way to play games. Nintendo, SEGA, and PlayStation dominated the gaming scene and my friends and I would laugh and shout with each other playing Mario Kart, Sonic Adventure, and Final Fantasy. Today, people play games on their phones. Just as Chase Jarvis said "The best camera is the one that's with you", it seems the masses have judged that the best console is the one in your pocket. This year, mobile game revenue [is expected](http://www.cnbc.com/2016/04/22/mobile-game-revenue-to-pass-console-pc-for-first-time.html) to surpass PC and console revenue for the first time and I think it's pretty safe to use revenue as a proxy for usage.
@@ -14,6 +16,8 @@ We've lost something in the process: mobile games tend to be solitary. Although 
 A few weeks ago, my friends and I realized that using our ubiquitous phones and laptops, we can replicate the multiplayer console experience. The phones become the controllers and the laptop is the console. The experience can fundamentally be the same as 20 years ago. The difference is that we can ditch the wires, support any number of players, and play anywhere. We can once again laugh and shout with each other.
 
 # Implementation
+On a laptop, a user visits [https://webtendo.herokuapp.com"](https://webtendo.herokuapp.com) and selects a game as the host. On an Android phone, users can visit the same site and select the same game as a player. On iOS, players can download from [iTunes](https://itunes.apple.com/us/app/webtendo/id1180349310). If on the same wifi network, the server automatically determines the room name. After a few seconds everyone connects and can start playing!
+
 To support the broadest range of games, latency between the controllers and the host needs to be minimal, preferably below 30 ms, which is the limit of human perception. So for the transport layer [WebRTC](https://webrtc.org/) seemed to be the natural choice. WebRTC allows devices to communicate on the shortest possible network path between them, even if there's NAT or firewalling in the way. It's supported in Chrome on Windows, Mac, and Android, but unfortunately not on Chrome iOS (more on that below). However both iOS and Android have native WebRTC support.
 
 In my tests using Chrome 54 on a Mac and Chrome 54 on Android on the same wifi network, I saw round trip times of about 12 ms, though this spiked much higher if the device was not active. This was the first hint that building a high quality platform might be viable. The codelab and most online resources focused on transmitting realtime audio and video rather than data, so getting an absolute minimum example going was an exercise in chopping down and modifying the examples on the net to their minimum possible.
